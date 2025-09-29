@@ -1,101 +1,135 @@
-﻿using System;
+﻿using NAudio.Wave;
+using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Speech.Recognition;
+using System.Text.Json;
 using System.Windows;
+using Vosk;
+using System.IO;
+using System.Windows.Media;
 
 namespace SpotifyAndFeel
 {
     public partial class MainWindow : Window
     {
-        private SpeechRecognitionEngine recognizer;
-        private bool isListening = false;
+        private Model _model;
+        private VoskRecognizer _recognizer;
+        private WaveInEvent _waveIn;
+        private bool _isRecording;
+
+        private string _turkishModelPath;
+        private string _englishModelPath;
+
 
         public MainWindow()
         {
             InitializeComponent();
-            PositionBottomRight();      // Önceki örnek: pencereyi sağ altta konumlandır
-            InitializeSpeechEngine();   // STT motorunu başlat
-
-            
-
+            PositionBottomRight(); 
+            InitializeVosk();
         }
 
-        private void InitializeSpeechEngine()
+        private void InitializeVosk()
         {
-            // Türkçe model ile tanıyıcı oluştur
-            recognizer = new SpeechRecognitionEngine();
+            Vosk.Vosk.SetLogLevel(0);
 
-            // Mikrofonu input olarak ayarla
-            recognizer.SetInputToDefaultAudioDevice();
+            _turkishModelPath = "Models\\vosk-model-small-tr-0.3";
+            _englishModelPath = "Models\\vosk-model-small-en-us-0.15";
 
-            // Genel konuşma (dictation) grameri yükle
-            recognizer.LoadGrammar(new DictationGrammar());
+            InitializeAudio();
 
-            // Event abonelikleri
-            recognizer.SpeechHypothesized += Recognizer_SpeechHypothesized;
-            recognizer.SpeechRecognized += Recognizer_SpeechRecognized;
-            recognizer.RecognizeCompleted += Recognizer_RecognizeCompleted;
-            recognizer.AudioLevelUpdated += Recognizer_AudioLevelUpdated;
+            SetLanguage("en");
         }
+
+        private void InitializeAudio()
+        {
+            _waveIn = new WaveInEvent
+            {
+                DeviceNumber = 0,
+                WaveFormat = new WaveFormat(16000, 1)
+            };
+            _waveIn.DataAvailable += OnDataAvailable;
+            _waveIn.RecordingStopped += OnRecordingStopped;
+        }
+
+        private void SetLanguage(string lang)
+        {
+
+            if (_isRecording)
+            {
+                _waveIn.StopRecording();
+                _isRecording = false;
+                btnToggle.Content = "Start Recording";
+            }
+
+
+            _recognizer?.Dispose();
+            _model?.Dispose();
+
+            var modelPath = lang == "tr"
+                ? _turkishModelPath
+                : _englishModelPath;
+
+            _model = new Model(modelPath);
+            _recognizer = new VoskRecognizer(_model, 16000.0f);
+        }
+
 
         private void BtnToggle_Click(object sender, RoutedEventArgs e)
         {
-            if (!isListening)
+            if (!_isRecording)
             {
-                txtResult.Text = string.Empty;
-                recognizer.RecognizeAsync(RecognizeMode.Multiple);
-                btnToggle.Content = "Kaydı Durdur";
-                isListening = true;
+                _recognizer.Reset();
+                txtResult.Clear();
+
+                _waveIn.StartRecording();
+                btnToggle.Content = "Stop Recording";
+                _isRecording = true;
             }
             else
             {
-                recognizer.RecognizeAsyncStop();
+                _waveIn.StopRecording();
+            }
+        }
+        private void OnDataAvailable(object sender, WaveInEventArgs e)
+        {
+            _recognizer.AcceptWaveform(e.Buffer, e.BytesRecorded);
+        }
+
+        private void OnRecordingStopped(object sender, StoppedEventArgs e)
+        {
+            try
+            {
+                var finalJson = _recognizer.FinalResult();
+                var text = ExtractText(finalJson);
+
+                Dispatcher.Invoke(() =>
+                {
+                    txtResult.Text = text;
+                    btnToggle.Content = "Start Recording";
+                    _isRecording = false;
+                });
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() =>
+                    MessageBox.Show(ex.Message)
+                );
             }
         }
 
-        private void Recognizer_SpeechHypothesized(object sender, SpeechHypothesizedEventArgs e)
+        private string ExtractText(string json)
         {
-            Dispatcher.Invoke(() =>
-            {
-                txtResult.Text = e.Result.Text + "...";
-            });
-        }
-
-        private void Recognizer_SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                txtResult.Text = e.Result.Text;
-            });
-        }
-
-        private void Recognizer_RecognizeCompleted(object sender, RecognizeCompletedEventArgs e)
-        {
-
-            Dispatcher.Invoke(() =>
-            {
-                isListening = false;
-                btnToggle.Content = "Kaydı Başlat";
-
-                if (e.Error != null)
-                {
-                    MessageBox.Show($"Tanıma hatası: {e.Error.Message}",
-                                    "Hata",
-                                    MessageBoxButton.OK,
-                                    MessageBoxImage.Error);
-                }
-            });
-        }
-
-        private void Recognizer_AudioLevelUpdated(object sender, AudioLevelUpdatedEventArgs e)
-        {
-
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.GetProperty("text").GetString();
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            // X’e basıldığında pencereyi gizle, uygulama tepside kalsın
+            _waveIn?.Dispose();
+            _recognizer?.Dispose();
+            _model?.Dispose();
+
             e.Cancel = true;
             ShowInTaskbar = false;
             Hide();
@@ -107,5 +141,34 @@ namespace SpotifyAndFeel
             Left = wa.Right - Width - 10;
             Top = wa.Bottom - Height - 10;
         }
+
+        private void BtnEnglish_Click(object sender, RoutedEventArgs e)
+        {
+            // Turkish düğmesinin işaretini kaldıralım
+            btnTurkish.IsChecked = false;
+            SetLanguage("en");
+        }
+
+        private void BtnEnglish_Unchecked(object sender, RoutedEventArgs e)
+        {
+            // ToggleButton ister istemez ikili çalıştığı için 
+            // onun tekrar işaretlenmesini zorlayabiliriz
+            if (!btnTurkish.IsChecked.GetValueOrDefault())
+                btnEnglish.IsChecked = true;
+        }
+
+        private void BtnTurkish_Click(object sender, RoutedEventArgs e)
+        {
+            btnEnglish.IsChecked = false;
+            SetLanguage("tr");
+        }
+
+        private void BtnTurkish_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (!btnEnglish.IsChecked.GetValueOrDefault())
+                btnTurkish.IsChecked = true;
+        }
+
+
     }
 }

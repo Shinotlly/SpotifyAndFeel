@@ -15,10 +15,10 @@ namespace SpotifyAndFeel
 
             AllocConsole();
 
-            // XAML'deki TaskbarIcon örneğini al
+
             _trayIcon = (TaskbarIcon)Resources["TrayIcon"];
 
-            // MainWindow'u oluşturup gizle
+
             MainWindow = new MainWindow();
             MainWindow.ShowInTaskbar = false;
             MainWindow.Hide();
@@ -32,7 +32,6 @@ namespace SpotifyAndFeel
 
         }
 
-        // Tepsi menüsünden "Aç" tıklandığında
         public void OnOpen(object sender, RoutedEventArgs e)
         {
             MainWindow.ShowInTaskbar = true;
@@ -41,11 +40,11 @@ namespace SpotifyAndFeel
             MainWindow.Activate();
         }
 
-        // Tepsi menüsünden "Çıkış" tıklandığında
+
         public void OnExit(object sender, RoutedEventArgs e)
         {
-            _trayIcon.Dispose();   // Kaynakları temizle
-            Shutdown();            // Uygulamayı sonlandır
+            _trayIcon.Dispose();  
+            Shutdown();          
         }
 
         [DllImport("kernel32.dll", SetLastError = true)]

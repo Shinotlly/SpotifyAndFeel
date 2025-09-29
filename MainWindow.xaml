@@ -1,7 +1,7 @@
 ﻿<Window x:Class="SpotifyAndFeel.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="SpotifyAndFeel" 
+        Title="SpotifyAndFeel"
         Width="400" Height="300"
         WindowStartupLocation="Manual"
         ResizeMode="NoResize"
@@ -13,7 +13,7 @@
         <!-- Yuvarlak Köşeli Buton Stili -->
         <Style x:Key="RoundedButton" TargetType="Button">
             <Setter Property="Background" Value="Aqua"/>
-            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Foreground" Value="Black"/>
             <Setter Property="BorderBrush" Value="AntiqueWhite"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,4"/>
@@ -21,18 +21,52 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border  
-              Background="{TemplateBinding Background}"
-              BorderBrush="{TemplateBinding BorderBrush}"
-              BorderThickness="{TemplateBinding BorderThickness}"
-              CornerRadius="8">
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8">
                             <ContentPresenter
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"/>
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="LangToggleButton" TargetType="ToggleButton">
+            <!-- Varsayılan ayarlar -->
+            <Setter Property="Background" Value="CornflowerBlue"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="BorderBrush" Value="AntiqueWhite"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <!-- Kendi kontrol şablonumuz, varsayılan visual-state'leri (hover/pressed) içermez -->
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border
+          Background="{TemplateBinding Background}"
+          BorderBrush="{TemplateBinding BorderBrush}"
+          BorderThickness="{TemplateBinding BorderThickness}"
+          CornerRadius="8">
+                            <ContentPresenter
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Margin="{TemplateBinding Padding}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <!-- Sadece IsChecked true iken background koyu gri olsun -->
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="LightSteelBlue"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
     </Window.Resources>
 
     <Grid Margin="10">
@@ -41,19 +75,37 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Button x:Name="btnToggle"
-            Style="{StaticResource RoundedButton}"
-            Content="Kaydı Başlat"
-            Width="120" Height="32"
-            Click="BtnToggle_Click"/>
+        <!-- DİL SEÇİM VE KAYIT BUTONLARI -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+            <ToggleButton x:Name="btnTurkish"
+                    Style="{StaticResource LangToggleButton}"
+                    Content="Turkish"
+                    Width="80" Height="32"
+                    Checked="BtnTurkish_Click"
+                    Unchecked="BtnTurkish_Unchecked"/>
+
+            <Button x:Name="btnToggle"
+                    Style="{StaticResource RoundedButton}"
+                    Content="Kaydı Başlat"
+                    Width="120" Height="32"
+                    Click="BtnToggle_Click"
+                    Margin="40,0,40,0"/>
+
+            <ToggleButton x:Name="btnEnglish"
+                    Style="{StaticResource LangToggleButton}"
+                    Content="English"
+                    Width="80" Height="32"
+                    Checked="BtnEnglish_Click"
+                    Unchecked="BtnEnglish_Unchecked"/>
+        </StackPanel>
 
         <TextBox x:Name="txtResult"
-             Grid.Row="1"
-             Margin="0,10,0,0"
-             Background="DimGray"
-             Foreground="Black"
-             TextWrapping="Wrap"
-             AcceptsReturn="True"
-             VerticalScrollBarVisibility="Auto"/>
+                 Grid.Row="1"
+                 Margin="0,10,0,0"
+                 Background="DimGray"
+                 Foreground="Black"
+                 TextWrapping="Wrap"
+                 AcceptsReturn="True"
+                 VerticalScrollBarVisibility="Auto"/>
     </Grid>
 </Window>
