@@ -10,9 +10,8 @@
         Closing="Window_Closing">
 
     <Window.Resources>
-        <!-- Yuvarlak Köşeli Buton Stili -->
         <Style x:Key="RoundedButton" TargetType="Button">
-            <Setter Property="Background" Value="Aqua"/>
+            <Setter Property="Background" Value="DarkSeaGreen"/>
             <Setter Property="Foreground" Value="Black"/>
             <Setter Property="BorderBrush" Value="AntiqueWhite"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -35,13 +34,13 @@
         </Style>
 
         <Style x:Key="LangToggleButton" TargetType="ToggleButton">
-            <!-- Varsayılan ayarlar -->
+
             <Setter Property="Background" Value="CornflowerBlue"/>
             <Setter Property="Foreground" Value="Black"/>
             <Setter Property="BorderBrush" Value="AntiqueWhite"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,4"/>
-            <!-- Kendi kontrol şablonumuz, varsayılan visual-state'leri (hover/pressed) içermez -->
+
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
@@ -59,7 +58,7 @@
                 </Setter.Value>
             </Setter>
 
-            <!-- Sadece IsChecked true iken background koyu gri olsun -->
+
             <Style.Triggers>
                 <Trigger Property="IsChecked" Value="True">
                     <Setter Property="Background" Value="LightSteelBlue"/>
@@ -75,7 +74,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- DİL SEÇİM VE KAYIT BUTONLARI -->
+
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
             <ToggleButton x:Name="btnTurkish"
                     Style="{StaticResource LangToggleButton}"

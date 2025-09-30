@@ -2,12 +2,15 @@
 using System.Runtime.InteropServices;
 using System.Speech.Recognition;
 using System.Windows;
+using Microsoft.Extensions.Configuration;
+
 
 namespace SpotifyAndFeel
 {
     public partial class App : Application
     {
         private TaskbarIcon _trayIcon;
+
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -22,13 +25,6 @@ namespace SpotifyAndFeel
             MainWindow = new MainWindow();
             MainWindow.ShowInTaskbar = false;
             MainWindow.Hide();
-
-            foreach (var r in SpeechRecognitionEngine.InstalledRecognizers())
-            {
-                Console.WriteLine($"{r.Culture.Name} — {r.Description}");
-            }
-
-            Console.WriteLine("ssss");
 
         }
 

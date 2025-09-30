@@ -8,6 +8,9 @@ using System.Windows;
 using Vosk;
 using System.IO;
 using System.Windows.Media;
+using SpotifyAndFeel.Services;
+using Microsoft.Extensions.Configuration;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SpotifyAndFeel
 {
@@ -21,12 +24,36 @@ namespace SpotifyAndFeel
         private string _turkishModelPath;
         private string _englishModelPath;
 
+        private SpotifyCurlService _spotify;
+
+
 
         public MainWindow()
         {
             InitializeComponent();
             PositionBottomRight(); 
             InitializeVosk();
+
+            var config = new ConfigurationBuilder()
+                        .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                        .AddJsonFile("appsettings.json", optional: false)
+                        .AddJsonFile("appsettings.development.json", optional: true)
+                        .Build();
+            var section = config.GetSection("Spotify");
+            var clientId = section["ClientId"];
+            var redirect = section["RedirectUri"];
+
+            // 2) Servisi hazırla
+            _spotify = new SpotifyCurlService(clientId, redirect);
+
+            // 3) Yetkilendirme
+            Task.Run(async () =>
+            {
+                var code = await _spotify.AuthorizeAsync();
+                var accessToken = await _spotify.RequestTokensAsync(code);
+                Dispatcher.Invoke(() => txtResult.Text = "Spotify hazır");
+            });
+
         }
 
         private void InitializeVosk()
@@ -96,12 +123,15 @@ namespace SpotifyAndFeel
             _recognizer.AcceptWaveform(e.Buffer, e.BytesRecorded);
         }
 
-        private void OnRecordingStopped(object sender, StoppedEventArgs e)
+        private async void OnRecordingStopped(object sender, StoppedEventArgs e)
         {
+
+            string text = string.Empty;
+
             try
             {
                 var finalJson = _recognizer.FinalResult();
-                var text = ExtractText(finalJson);
+                text = ExtractText(finalJson);
 
                 Dispatcher.Invoke(() =>
                 {
@@ -116,6 +146,32 @@ namespace SpotifyAndFeel
                     MessageBox.Show(ex.Message)
                 );
             }
+            try
+            {
+                // 2.1) Access Token (yenileme token’ı varsa yenile, yoksa ilk istek sonrası sakla)
+                var accessToken = await _spotify.RefreshAccessTokenAsync();
+
+                // 2.2) Metni Spotify’da ara (ilk eşleşen parçanın URI’si)
+                var trackUri = await _spotify.SearchFirstTrackUriAsync(text, accessToken);
+                if (string.IsNullOrEmpty(trackUri))
+                {
+                    Dispatcher.Invoke(() =>
+                        MessageBox.Show("Spotify’da eşleşen şarkı bulunamadı.")
+                    );
+                    return;
+                }
+
+                // 2.3) Parçayı çal
+                await _spotify.PlayUriAsync(trackUri, accessToken);
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() =>
+                    MessageBox.Show($"Spotify isteği başarısız: {ex.Message}")
+                );
+            }
+
+
         }
 
         private string ExtractText(string json)
@@ -144,15 +200,14 @@ namespace SpotifyAndFeel
 
         private void BtnEnglish_Click(object sender, RoutedEventArgs e)
         {
-            // Turkish düğmesinin işaretini kaldıralım
+
             btnTurkish.IsChecked = false;
             SetLanguage("en");
         }
 
         private void BtnEnglish_Unchecked(object sender, RoutedEventArgs e)
         {
-            // ToggleButton ister istemez ikili çalıştığı için 
-            // onun tekrar işaretlenmesini zorlayabiliriz
+
             if (!btnTurkish.IsChecked.GetValueOrDefault())
                 btnEnglish.IsChecked = true;
         }
