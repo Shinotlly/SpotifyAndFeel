@@ -11,6 +11,9 @@ using System.Windows.Media;
 using SpotifyAndFeel.Services;
 using Microsoft.Extensions.Configuration;
 using static System.Net.Mime.MediaTypeNames;
+using Microsoft.Extensions.Hosting;
+using SpotifyAndFeel.Models;
+using System.Diagnostics;
 
 namespace SpotifyAndFeel
 {
@@ -24,36 +27,64 @@ namespace SpotifyAndFeel
         private string _turkishModelPath;
         private string _englishModelPath;
 
-        private SpotifyCurlService _spotify;
+        private readonly AuthService _authService;
+        private readonly TokenService _tokenService;
+        private SpotifyApiService _spotifyApi;
 
 
 
-        public MainWindow()
+        public MainWindow(AuthService authService, TokenService tokenService)
         {
+            _authService = authService;
+            _tokenService = tokenService;
+
             InitializeComponent();
-            PositionBottomRight(); 
+            PositionBottomRight();
             InitializeVosk();
 
-            var config = new ConfigurationBuilder()
-                        .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                        .AddJsonFile("appsettings.json", optional: false)
-                        .AddJsonFile("appsettings.development.json", optional: true)
-                        .Build();
-            var section = config.GetSection("Spotify");
-            var clientId = section["ClientId"];
-            var redirect = section["RedirectUri"];
-
-            // 2) Servisi hazırla
-            _spotify = new SpotifyCurlService(clientId, redirect);
-
-            // 3) Yetkilendirme
-            Task.Run(async () =>
+            // ➋ Kayıt düğmesini başta devre dışı bırak
+            btnToggle.IsEnabled = false;
+            // Örnek: Uygulama yüklendiğinde Spotify auth akışını başlat
+            Loaded += async (_, __) =>
             {
-                var code = await _spotify.AuthorizeAsync();
-                var accessToken = await _spotify.RequestTokensAsync(code);
-                Dispatcher.Invoke(() => txtResult.Text = "Spotify hazır");
-            });
 
+                Debug.WriteLine("[MainWindow] Loaded olayı tetiklendi");
+
+                try
+                {
+                    await InitializeSpotifyAsync();
+                    btnToggle.IsEnabled = true;   // Ses kaydı düğmesini etkinleştirebilirsiniz
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this,
+                        $"Spotify bağlantısı başarısız:\n{ex.Message}",
+                        "Oturum Hatası", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+            };
+
+            
+
+        }
+
+
+        public async Task InitializeSpotifyAsync()
+        {
+            const string scopes =
+              "user-read-private user-read-email " +
+              "user-read-playback-state user-modify-playback-state user-read-currently-playing";
+
+            // 1. Yetki kodu al
+            var (code, redirectUri) = await _authService.GetAuthorizationCodeAsync(scopes);
+
+            // 2. Token al
+            var token = await _tokenService.ExchangeCodeForTokenAsync(code, redirectUri);
+
+            Debug.WriteLine($"[MainWindow] access_token uzunluğu: {token.AccessToken.Length}");
+
+            // 3. SpotifyApiService örneğini oluştur
+            _spotifyApi = new SpotifyApiService(token.AccessToken);
         }
 
         private void InitializeVosk()
@@ -125,14 +156,21 @@ namespace SpotifyAndFeel
 
         private async void OnRecordingStopped(object sender, StoppedEventArgs e)
         {
+            if (_spotifyApi == null)
+            {
+                MessageBox.Show(
+                    this,
+                    "Spotify servisi hazır değil. Lütfen biraz bekleyin.",
+                    "Hazır Değil",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
 
-            string text = string.Empty;
-
+            string text;
             try
             {
-                var finalJson = _recognizer.FinalResult();
-                text = ExtractText(finalJson);
-
+                text = ExtractText(_recognizer.FinalResult());
                 Dispatcher.Invoke(() =>
                 {
                     txtResult.Text = text;
@@ -142,36 +180,58 @@ namespace SpotifyAndFeel
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() =>
-                    MessageBox.Show(ex.Message)
-                );
+                MessageBox.Show(
+                    this,
+                    $"Ses tanıma hatası:\n{ex.Message}",
+                    "Hata",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
             }
+
+            // 1. Şarkı ara
+            string trackUri;
             try
             {
-                // 2.1) Access Token (yenileme token’ı varsa yenile, yoksa ilk istek sonrası sakla)
-                var accessToken = await _spotify.RefreshAccessTokenAsync();
-
-                // 2.2) Metni Spotify’da ara (ilk eşleşen parçanın URI’si)
-                var trackUri = await _spotify.SearchFirstTrackUriAsync(text, accessToken);
-                if (string.IsNullOrEmpty(trackUri))
-                {
-                    Dispatcher.Invoke(() =>
-                        MessageBox.Show("Spotify’da eşleşen şarkı bulunamadı.")
-                    );
-                    return;
-                }
-
-                // 2.3) Parçayı çal
-                await _spotify.PlayUriAsync(trackUri, accessToken);
+                trackUri = await _spotifyApi.SearchTrackAsync(text);
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() =>
-                    MessageBox.Show($"Spotify isteği başarısız: {ex.Message}")
-                );
+                MessageBox.Show(
+                    this,
+                    $"Search API hatası:\n{ex.Message}",
+                    "Spotify Hatası",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
             }
 
+            // 2. Eğer sonuç yoksa kullanıcıyı bilgilendir
+            if (string.IsNullOrEmpty(trackUri))
+            {
+                MessageBox.Show(
+                    this,
+                    $"Şarkı bulunamadı: \"{text}\"",
+                    "Bulunamadı",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
 
+            // 3. Bulunan şarkıyı çal
+            try
+            {
+                await _spotifyApi.PlayTrackAsync(trackUri);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    $"Play API hatası:\n{ex.Message}",
+                    "Spotify Hatası",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         private string ExtractText(string json)

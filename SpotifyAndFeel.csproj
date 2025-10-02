@@ -31,10 +31,6 @@
     <Resource Include="Resources\mic.ico" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
 	<ItemGroup>
 		<!-- Models içindeki tüm dosyaları derleme çıktısına kopyala -->
 		<Content Include="Models\**\*">
@@ -56,6 +52,10 @@
 	<ItemGroup>
 		<!-- Generic Host için ek konfigürasyon -->
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Model\" />
 	</ItemGroup>
 
 
