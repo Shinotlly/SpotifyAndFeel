@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using SpotifyAndFeel.Models;
 using SpotifyAndFeel.Services;
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 
@@ -44,21 +45,34 @@ namespace SpotifyAndFeel
         {
             base.OnStartup(e);
 
-            // ➊ DI host’u başlat
-            await _host.StartAsync();
-
-            // ➋ Console penceresi aç (isteğe bağlı)
             AllocConsole();
-
-            // ➌ Tray ikonu al
+            await _host.StartAsync();
             _trayIcon = (TaskbarIcon)Resources["TrayIcon"];
 
-            // ➍ MainWindow örneğini al ve gizle
+            // DI ile MainWindow’u al ve göster
             var window = _host.Services.GetRequiredService<MainWindow>();
             MainWindow = window;
-            window.ShowInTaskbar = false;
-            window.Hide();
+            window.ShowInTaskbar = true;
+            window.Show();
+            window.Activate();
 
+            // Spotify oturumunu doğrudan burada çalıştır
+            Debug.WriteLine("[App] Spotify init başlıyor");
+            try
+            {
+                await window.InitializeSpotifyAsync();
+                Debug.WriteLine("[App] Spotify init tamamlandı");
+                window.EnableRecording();  // btnToggle.IsEnabled = true yapan public method
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] Spotify init hata: {ex.Message}");
+                MessageBox.Show(
+                    $"Spotify bağlantısı başarısız:\n{ex.Message}",
+                    "Oturum Hatası",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         // Uygulama kapanırken burası çalışır

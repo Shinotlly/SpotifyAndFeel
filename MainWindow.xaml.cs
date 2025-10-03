@@ -30,6 +30,8 @@ namespace SpotifyAndFeel
         private readonly AuthService _authService;
         private readonly TokenService _tokenService;
         private SpotifyApiService _spotifyApi;
+        private bool _spotifyInitialized;
+
 
 
 
@@ -44,31 +46,38 @@ namespace SpotifyAndFeel
 
             // ➋ Kayıt düğmesini başta devre dışı bırak
             btnToggle.IsEnabled = false;
-            // Örnek: Uygulama yüklendiğinde Spotify auth akışını başlat
-            Loaded += async (_, __) =>
-            {
-
-                Debug.WriteLine("[MainWindow] Loaded olayı tetiklendi");
-
-                try
-                {
-                    await InitializeSpotifyAsync();
-                    btnToggle.IsEnabled = true;   // Ses kaydı düğmesini etkinleştirebilirsiniz
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(this,
-                        $"Spotify bağlantısı başarısız:\n{ex.Message}",
-                        "Oturum Hatası", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-
-            };
-
-            
-
         }
 
+        protected override async void OnContentRendered(EventArgs e)
+        {
+            base.OnContentRendered(e);
 
+            // Sadece bir kez initialize edelim
+            if (_spotifyInitialized) return;
+
+            try
+            {
+                //await InitializeSpotifyAsync();
+                btnToggle.IsEnabled = true;
+                _spotifyInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    $"Spotify bağlantısı başarısız:\n{ex.Message}",
+                    "Oturum Hatası",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        public void EnableRecording()
+        {
+            btnToggle.IsEnabled = true;
+
+
+        }
         public async Task InitializeSpotifyAsync()
         {
             const string scopes =
