@@ -45,9 +45,10 @@ namespace SpotifyAndFeel.Services
             if (string.IsNullOrWhiteSpace(query))
                 throw new ArgumentException("Arama metni boş olamaz.", nameof(query));
 
-            // Spotify max 100 karakter kabul ediyor
             query = query.Length <= 100 ? query : query.Substring(0, 100);
-            var url = $"search?q={Uri.EscapeDataString(query)}&type=track&limit=1";
+
+            // 🔹 5 sonuç getir
+            var url = $"search?q={Uri.EscapeDataString(query)}&type=track&limit=5";
 
             using var res = await _client.GetAsync(url);
             var body = await res.Content.ReadAsStringAsync();
@@ -57,18 +58,43 @@ namespace SpotifyAndFeel.Services
                     $"Search API hata {res.StatusCode}: {body}");
 
             using var doc = JsonDocument.Parse(body);
-            var first = doc.RootElement
+            var items = doc.RootElement
                            .GetProperty("tracks")
                            .GetProperty("items")
                            .EnumerateArray()
-                           .FirstOrDefault();
+                           .ToList();
 
-            // Eğer hiç sonuç yoksa null dön
-            if (first.ValueKind == JsonValueKind.Undefined)
+            if (items.Count == 0)
+            {
+                Debug.WriteLine("[SpotifyApiService] Aramada hiçbir sonuç bulunamadı.");
                 return null;
+            }
 
-            return first.GetProperty("uri").GetString();
+            Debug.WriteLine($"[SpotifyApiService] \"{query}\" için bulunan ilk {items.Count} sonuç:");
+
+            int index = 1;
+            foreach (var item in items)
+            {
+                string trackName = item.GetProperty("name").GetString();
+                string artistName = item.GetProperty("artists")[0].GetProperty("name").GetString();
+                int popularity = item.TryGetProperty("popularity", out var popElem) ? popElem.GetInt32() : -1;
+                string uri = item.GetProperty("uri").GetString();
+
+                Debug.WriteLine($"  {index}. {artistName} - {trackName} (Popularity: {popularity})");
+                Debug.WriteLine($"     URI: {uri}");
+                index++;
+            }
+
+            // 🔹 Sadece ilk sonucu döndür (Spotify’ın döndürdüğü en alakalı şarkı)
+            var first = items.First();
+            string firstUri = first.GetProperty("uri").GetString();
+
+            Debug.WriteLine($"[SpotifyApiService] En üstteki sonuç seçildi: {first.GetProperty("name").GetString()}");
+
+            return firstUri;
         }
+
+
 
         // 2. Aktif cihazları listeler ve ilkine URI listesiyle oynatma komutu yollar
         public async Task PlayTrackAsync(string trackUri)
