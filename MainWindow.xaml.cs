@@ -14,6 +14,7 @@ using static System.Net.Mime.MediaTypeNames;
 using Microsoft.Extensions.Hosting;
 using SpotifyAndFeel.Models;
 using System.Diagnostics;
+using System.Windows.Input;
 
 namespace SpotifyAndFeel
 {
@@ -165,17 +166,6 @@ namespace SpotifyAndFeel
 
         private async void OnRecordingStopped(object sender, StoppedEventArgs e)
         {
-            if (_spotifyApi == null)
-            {
-                MessageBox.Show(
-                    this,
-                    "Spotify servisi hazır değil. Lütfen biraz bekleyin.",
-                    "Hazır Değil",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-                return;
-            }
-
             string text;
             try
             {
@@ -198,50 +188,10 @@ namespace SpotifyAndFeel
                 return;
             }
 
-            // 1. Şarkı ara
-            string trackUri;
-            try
-            {
-                trackUri = await _spotifyApi.SearchTrackAsync(text);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    this,
-                    $"Search API hatası:\n{ex.Message}",
-                    "Spotify Hatası",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-                return;
-            }
-
-            // 2. Eğer sonuç yoksa kullanıcıyı bilgilendir
-            if (string.IsNullOrEmpty(trackUri))
-            {
-                MessageBox.Show(
-                    this,
-                    $"Şarkı bulunamadı: \"{text}\"",
-                    "Bulunamadı",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-                return;
-            }
-
-            // 3. Bulunan şarkıyı çal
-            try
-            {
-                await _spotifyApi.PlayTrackAsync(trackUri);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    this,
-                    $"Play API hatası:\n{ex.Message}",
-                    "Spotify Hatası",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-            }
+            // 🔹 Spotify araması BURADAN kaldırıldı.
+            // Artık kullanıcı Play tuşuna bastığında yapılacak.
         }
+
 
         private string ExtractText(string json)
         {
@@ -293,6 +243,66 @@ namespace SpotifyAndFeel
                 btnTurkish.IsChecked = true;
         }
 
+        private async void BtnPlay_Click(object sender, RoutedEventArgs e)
+        {
+            if (_spotifyApi == null)
+            {
+                MessageBox.Show(
+                    this,
+                    "Spotify servisi hazır değil. Lütfen biraz bekleyin.",
+                    "Hazır Değil",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            string text = txtResult.Text;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                MessageBox.Show("Lütfen önce bir metin girin veya ses kaydı yapın.");
+                return;
+            }
+
+            try
+            {
+                // 1. Şarkıyı ara
+                var trackUri = await _spotifyApi.SearchTrackAsync(text);
+
+                if (string.IsNullOrEmpty(trackUri))
+                {
+                    MessageBox.Show($"Şarkı bulunamadı: \"{text}\"");
+                    return;
+                }
+
+                // 2. Şarkıyı çal
+                await _spotifyApi.PlayTrackAsync(trackUri);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Spotify Hatası:\n{ex.Message}",
+                    "Hata",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                DragMove();
+        }
+
+        private void Minimize_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
 
     }
 }
