@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using SpotifyAndFeel.Models;
 using System.Diagnostics;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 
 namespace SpotifyAndFeel
 {
@@ -24,28 +25,23 @@ namespace SpotifyAndFeel
         private VoskRecognizer _recognizer;
         private WaveInEvent _waveIn;
         private bool _isRecording;
-
         private string _turkishModelPath;
         private string _englishModelPath;
-
         private readonly AuthService _authService;
         private readonly TokenService _tokenService;
         private SpotifyApiService _spotifyApi;
         private bool _spotifyInitialized;
 
 
-
-
         public MainWindow(AuthService authService, TokenService tokenService)
         {
+            
             _authService = authService;
             _tokenService = tokenService;
 
             InitializeComponent();
             PositionBottomRight();
             InitializeVosk();
-
-            // ➋ Kayıt düğmesini başta devre dışı bırak
             btnToggle.IsEnabled = false;
         }
 
@@ -53,59 +49,48 @@ namespace SpotifyAndFeel
         {
             base.OnContentRendered(e);
 
-            // Sadece bir kez initialize edelim
             if (_spotifyInitialized) return;
 
             try
             {
-                //await InitializeSpotifyAsync();
                 btnToggle.IsEnabled = true;
                 _spotifyInitialized = true;
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    this,
-                    $"Spotify bağlantısı başarısız:\n{ex.Message}",
-                    "Oturum Hatası",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                await ShowToastAsync($"Spotify connection failed: {ex.Message}", "#E53935");
             }
         }
 
         public void EnableRecording()
         {
             btnToggle.IsEnabled = true;
-
-
         }
+
         public async Task InitializeSpotifyAsync()
         {
             const string scopes =
               "user-read-private user-read-email " +
               "user-read-playback-state user-modify-playback-state user-read-currently-playing";
 
-            // 1. Yetki kodu al
             var (code, redirectUri) = await _authService.GetAuthorizationCodeAsync(scopes);
-
-            // 2. Token al
             var token = await _tokenService.ExchangeCodeForTokenAsync(code, redirectUri);
-
-            Debug.WriteLine($"[MainWindow] access_token uzunluğu: {token.AccessToken.Length}");
-
-            // 3. SpotifyApiService örneğini oluştur
+            Debug.WriteLine($"[MainWindow] access_token length: {token.AccessToken.Length}");
             _spotifyApi = new SpotifyApiService(token.AccessToken);
+            if (_spotifyApi == null)
+            {
+                Debug.WriteLine("AAAAAAAAAAAAAAAAAAAAAAAAAAAa");
+
+            }
+                
         }
 
         private void InitializeVosk()
         {
             Vosk.Vosk.SetLogLevel(0);
-
             _turkishModelPath = "Models\\vosk-model-small-tr-0.3";
             _englishModelPath = "Models\\vosk-model-small-en-us-0.15";
-
             InitializeAudio();
-
             SetLanguage("en");
         }
 
@@ -122,14 +107,12 @@ namespace SpotifyAndFeel
 
         private void SetLanguage(string lang)
         {
-
             if (_isRecording)
             {
                 _waveIn.StopRecording();
                 _isRecording = false;
                 btnToggle.Content = "Start Recording";
             }
-
 
             _recognizer?.Dispose();
             _model?.Dispose();
@@ -142,14 +125,12 @@ namespace SpotifyAndFeel
             _recognizer = new VoskRecognizer(_model, 16000.0f);
         }
 
-
         private void BtnToggle_Click(object sender, RoutedEventArgs e)
         {
             if (!_isRecording)
             {
                 _recognizer.Reset();
                 txtResult.Clear();
-
                 _waveIn.StartRecording();
                 btnToggle.Content = "Stop Recording";
                 _isRecording = true;
@@ -159,6 +140,7 @@ namespace SpotifyAndFeel
                 _waveIn.StopRecording();
             }
         }
+
         private void OnDataAvailable(object sender, WaveInEventArgs e)
         {
             _recognizer.AcceptWaveform(e.Buffer, e.BytesRecorded);
@@ -179,19 +161,10 @@ namespace SpotifyAndFeel
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    this,
-                    $"Ses tanıma hatası:\n{ex.Message}",
-                    "Hata",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                await ShowToastAsync($"Speech recognition error: {ex.Message}", "#E53935");
                 return;
             }
-
-            // 🔹 Spotify araması BURADAN kaldırıldı.
-            // Artık kullanıcı Play tuşuna bastığında yapılacak.
         }
-
 
         private string ExtractText(string json)
         {
@@ -219,14 +192,12 @@ namespace SpotifyAndFeel
 
         private void BtnEnglish_Click(object sender, RoutedEventArgs e)
         {
-
             btnTurkish.IsChecked = false;
             SetLanguage("en");
         }
 
         private void BtnEnglish_Unchecked(object sender, RoutedEventArgs e)
         {
-
             if (!btnTurkish.IsChecked.GetValueOrDefault())
                 btnEnglish.IsChecked = true;
         }
@@ -247,12 +218,7 @@ namespace SpotifyAndFeel
         {
             if (_spotifyApi == null)
             {
-                MessageBox.Show(
-                    this,
-                    "Spotify servisi hazır değil. Lütfen biraz bekleyin.",
-                    "Hazır Değil",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                await ShowToastAsync("Spotify service is not ready yet. Please wait a moment.", "#FFB300");
                 return;
             }
 
@@ -260,31 +226,26 @@ namespace SpotifyAndFeel
 
             if (string.IsNullOrWhiteSpace(text))
             {
-                MessageBox.Show("Lütfen önce bir metin girin veya ses kaydı yapın.");
+                await ShowToastAsync("Please enter or record some text first.", "#FFB300");
                 return;
             }
 
             try
             {
-                // 1. Şarkıyı ara
                 var trackUri = await _spotifyApi.SearchTrackAsync(text);
 
                 if (string.IsNullOrEmpty(trackUri))
                 {
-                    MessageBox.Show($"Şarkı bulunamadı: \"{text}\"");
+                    await ShowToastAsync($"No track found for: \"{text}\"", "#FFB300");
                     return;
                 }
 
-                // 2. Şarkıyı çal
                 await _spotifyApi.PlayTrackAsync(trackUri);
+                await ShowToastAsync($"Now playing: \"{text}\" 🎵");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Spotify Hatası:\n{ex.Message}",
-                    "Hata",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                await ShowToastAsync($"Spotify error: {ex.Message}", "#E53935");
             }
         }
 
@@ -304,5 +265,28 @@ namespace SpotifyAndFeel
             Close();
         }
 
+        private async Task ShowToastAsync(string message, string colorHex = "#1DB954", int durationMs = 2500)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                toastText.Text = message;
+                toastNotification.Background =
+                    (SolidColorBrush)new BrushConverter().ConvertFromString(colorHex);
+            });
+
+            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200))
+            {
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            };
+            toastNotification.BeginAnimation(OpacityProperty, fadeIn);
+
+            await Task.Delay(durationMs);
+
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300))
+            {
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
+            };
+            toastNotification.BeginAnimation(OpacityProperty, fadeOut);
+        }
     }
 }

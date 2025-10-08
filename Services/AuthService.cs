@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using SpotifyAndFeel.Models;
-
+using SpotifyAndFeel;
 
 namespace SpotifyAndFeel.Services
 {
@@ -23,15 +23,14 @@ namespace SpotifyAndFeel.Services
 
         public async Task<(string Code, string RedirectUri)> GetAuthorizationCodeAsync(string scope)
         {
-            // 1. Dinamik port bul
+
             const int port = 5000;
-            // 2. Base address – path içermiyor
             string baseAddress = $"{_config.RedirectUriBase}:{port}";
-            // 3. Tarayıcıya vereceğimiz tam URI
+
             string redirectUri = $"{baseAddress}/callback";
+
             string state = Guid.NewGuid().ToString("N");
 
-            // 4. Web host’u sadece baseAddress ile ayağa kaldır
             var tcs = new TaskCompletionSource<string>();
             var host = Host.CreateDefaultBuilder()
                 .ConfigureWebHostDefaults(web =>
@@ -44,6 +43,7 @@ namespace SpotifyAndFeel.Services
                         {
                             endpoints.MapGet("/callback", async ctx =>
                             {
+
                                 if (ctx.Request.Query["state"] != state)
                                 {
                                     ctx.Response.StatusCode = 400;
@@ -52,9 +52,12 @@ namespace SpotifyAndFeel.Services
                                 }
 
                                 var code = ctx.Request.Query["code"];
-                                await ctx.Response.WriteAsync(
-                                  "<h1>Yetki alındı. Pencereyi kapatabilirsiniz.</h1>");
-                                tcs.SetResult(code);
+                                await ctx.Response.WriteAsync("<h1>Authorization successful ✅</h1>");
+
+                                //await MainWindow.ShowToastAsync("Spotify account linked successfully 🎧");
+
+
+                                tcs.TrySetResult(code);
                             });
                         });
                     });
@@ -63,18 +66,28 @@ namespace SpotifyAndFeel.Services
 
             await host.StartAsync();
 
-            // 5. Kullanıcıyı Spotify izin ekranına yönlendir
             var authUrl =
               "https://accounts.spotify.com/authorize?" +
               $"client_id={_config.ClientId}&response_type=code" +
               $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
               $"&scope={Uri.EscapeDataString(scope)}" +
               $"&state={state}";
-            Process.Start(new ProcessStartInfo(authUrl) { UseShellExecute = true });
 
-            // 6. Kod gelene kadar bekle, sonra sunucuyu kapat
+
+            try
+            {
+                Process.Start(new ProcessStartInfo(authUrl) { UseShellExecute = true });
+                //await MainWindow.Instance.ShowToastAsync("Waiting for Spotify authorization...");
+            }
+            catch (Exception ex)
+            {
+                //await MainWindow.Instance.ShowToastAsync($"Failed to open browser: {ex.Message}", "#E53935");
+            }
+
+
             var codeResult = await tcs.Task;
             await host.StopAsync();
+            //await MainWindow.Instance.ShowToastAsync("Authorization complete ✅");
 
             return (codeResult, redirectUri);
         }

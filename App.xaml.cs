@@ -16,13 +16,9 @@ namespace SpotifyAndFeel
         private readonly IHost _host;
         private TaskbarIcon _trayIcon;
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool AllocConsole();
-
         public App()
         {
-            // Generic Host & DI hazırlığı
+
             _host = Host.CreateDefaultBuilder()
                 .ConfigureAppConfiguration(cfg =>
                     cfg.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true))
@@ -40,42 +36,32 @@ namespace SpotifyAndFeel
                 .Build();
         }
 
-        // Uygulama ayağa kalkarken burası çalışır
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            AllocConsole();
-            await _host.StartAsync();
-            _trayIcon = (TaskbarIcon)Resources["TrayIcon"];
-
-            // DI ile MainWindow’u al ve göster
-            var window = _host.Services.GetRequiredService<MainWindow>();
-            MainWindow = window;
-            window.ShowInTaskbar = true;
-            window.Show();
-            window.Activate();
-
-            // Spotify oturumunu doğrudan burada çalıştır
-            Debug.WriteLine("[App] Spotify init başlıyor");
             try
             {
+                await _host.StartAsync();
+
+                _trayIcon = (TaskbarIcon)Resources["TrayIcon"];
+
+                var window = _host.Services.GetRequiredService<MainWindow>();
+                MainWindow = window; // Bu, DI ile oluşturulan instance
+                window.ShowInTaskbar = true;
+                window.Show();
+                window.Activate();
+
                 await window.InitializeSpotifyAsync();
-                Debug.WriteLine("[App] Spotify init tamamlandı");
-                window.EnableRecording();  // btnToggle.IsEnabled = true yapan public method
+                window.EnableRecording();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[App] Spotify init hata: {ex.Message}");
-                MessageBox.Show(
-                    $"Spotify bağlantısı başarısız:\n{ex.Message}",
-                    "Oturum Hatası",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                Debug.WriteLine($"Spotify initialization failed: {ex.Message}");
             }
         }
 
-        // Uygulama kapanırken burası çalışır
+
         protected override async void OnExit(ExitEventArgs e)
         {
             _trayIcon.Dispose();
@@ -85,7 +71,6 @@ namespace SpotifyAndFeel
             base.OnExit(e);
         }
 
-        // Tray menüsünden “Aç” tıklanınca
         public void OnOpen(object sender, RoutedEventArgs e)
         {
             MainWindow.ShowInTaskbar = true;
@@ -93,11 +78,9 @@ namespace SpotifyAndFeel
             MainWindow.WindowState = WindowState.Normal;
             MainWindow.Activate();
         }
-
-        // Tray menüsünden “Çıkış” tıklanınca
         public void OnTrayExit(object sender, RoutedEventArgs e)
         {
-            // Bu çağrı OnExit override’unu tetikler
+
             Shutdown();
         }
     }
