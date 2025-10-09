@@ -19,6 +19,10 @@ using System.Windows.Media.Animation;
 
 namespace SpotifyAndFeel
 {
+    //DONT FORGET TO CHECK APPSETTINGS.JSON
+    //DONT FORGET TO CHECK APPSETTINGS.JSON
+    //DONT FORGET TO CHECK APPSETTINGS.JSON
+
     public partial class MainWindow : Window
     {
         private Model _model;
