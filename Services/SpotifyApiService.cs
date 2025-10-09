@@ -12,7 +12,7 @@ namespace SpotifyAndFeel.Services
     public class SpotifyApiService
     {
         private readonly HttpClient _client;
-        private readonly MainWindow mainWindow;
+        public event Action<string, string, int> ToastRequested;
 
         public SpotifyApiService(string accessToken)
         {
@@ -30,7 +30,12 @@ namespace SpotifyAndFeel.Services
 
             Debug.WriteLine($"[SpotifyApiService] Authorization_Header: {_client.DefaultRequestHeaders.Authorization}");
 
-            //_mainWindow.ShowToastAsync("Spotify API initialized successfully.", "#1DB954");
+            RaiseToast("Spotify API initialized successfully.", "#1DB954");
+        }
+
+        private void RaiseToast(string message, string colorHex = "#1DB954", int durationMs = 2500)
+        {
+            ToastRequested?.Invoke(message, colorHex, durationMs);
         }
 
         public async Task<string> SearchTrackAsync(string query)
@@ -47,7 +52,7 @@ namespace SpotifyAndFeel.Services
 
             if (!res.IsSuccessStatusCode)
             {
-                //mainWindow.ShowToastAsync($"Spotify API Error: {res.StatusCode}", "#E53935");
+                RaiseToast($"Spotify API Error: {res.StatusCode}", "#E53935");
                 throw new InvalidOperationException($"Search API error {res.StatusCode}: {body}");
             }
 
@@ -61,7 +66,7 @@ namespace SpotifyAndFeel.Services
             if (items.Count == 0)
             {
                 Debug.WriteLine("[SpotifyApiService] No results found.");
-                //MainWindow.Instance?.ShowToastAsync("No tracks found for this query.", "#FFB300");
+                RaiseToast("No tracks found for this query.", "#FFB300");
                 return null;
             }
 
@@ -87,7 +92,7 @@ namespace SpotifyAndFeel.Services
             string firstArtist = first.GetProperty("artists")[0].GetProperty("name").GetString();
 
             Debug.WriteLine($"[SpotifyApiService] Selected: {firstTrack}");
-            //MainWindow.Instance?.ShowToastAsync($"Found: {firstTrack} by {firstArtist}", "#1DB954");
+            RaiseToast($"Found: {firstTrack} by {firstArtist}", "#1DB954");
 
             return firstUri;
         }
@@ -103,7 +108,7 @@ namespace SpotifyAndFeel.Services
 
             if (firstDevice.ValueKind == JsonValueKind.Undefined)
             {
-                //MainWindow.Instance?.ShowToastAsync("No active Spotify devices found.", "#E53935");
+                RaiseToast("No active Spotify devices found.", "#E53935");
                 throw new InvalidOperationException("No active devices found.");
             }
 
@@ -117,7 +122,7 @@ namespace SpotifyAndFeel.Services
             using var playRes = await _client.PutAsync(playUrl, content);
             playRes.EnsureSuccessStatusCode();
 
-            //MainWindow.Instance?.ShowToastAsync("Playing on your Spotify device 🎧", "#1DB954");
+            RaiseToast("Playing on your Spotify device 🎧", "#1DB954");
         }
     }
 }

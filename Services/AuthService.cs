@@ -15,11 +15,18 @@ namespace SpotifyAndFeel.Services
     public class AuthService
     {
         private readonly SpotifyConfig _config;
+        public event Action<string, string, int> ToastRequested;
 
         public AuthService(SpotifyConfig config)
         {
             _config = config;
         }
+
+        private void RaiseToast(string message, string colorHex = "#1DB954", int durationMs = 2500)
+        {
+            ToastRequested?.Invoke(message, colorHex, durationMs);
+        }
+
 
         public async Task<(string Code, string RedirectUri)> GetAuthorizationCodeAsync(string scope)
         {
@@ -54,7 +61,7 @@ namespace SpotifyAndFeel.Services
                                 var code = ctx.Request.Query["code"];
                                 await ctx.Response.WriteAsync("<h1>Authorization successful ✅</h1>");
 
-                                //await MainWindow.ShowToastAsync("Spotify account linked successfully 🎧");
+                                RaiseToast("Spotify account linked successfully 🎧");
 
 
                                 tcs.TrySetResult(code);
@@ -77,17 +84,17 @@ namespace SpotifyAndFeel.Services
             try
             {
                 Process.Start(new ProcessStartInfo(authUrl) { UseShellExecute = true });
-                //await MainWindow.Instance.ShowToastAsync("Waiting for Spotify authorization...");
+                RaiseToast("Waiting for Spotify authorization...");
             }
             catch (Exception ex)
             {
-                //await MainWindow.Instance.ShowToastAsync($"Failed to open browser: {ex.Message}", "#E53935");
+                RaiseToast($"Failed to open browser: {ex.Message}", "#E53935");
             }
 
 
             var codeResult = await tcs.Task;
             await host.StopAsync();
-            //await MainWindow.Instance.ShowToastAsync("Authorization complete ✅");
+            RaiseToast("Authorization complete ✅");
 
             return (codeResult, redirectUri);
         }

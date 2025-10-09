@@ -31,6 +31,8 @@ namespace SpotifyAndFeel
         private readonly TokenService _tokenService;
         private SpotifyApiService _spotifyApi;
         private bool _spotifyInitialized;
+        private static readonly SemaphoreSlim _toastLock = new(1, 1);
+        private static readonly object _uiLock = new();
 
 
         public MainWindow(AuthService authService, TokenService tokenService)
@@ -43,6 +45,12 @@ namespace SpotifyAndFeel
             PositionBottomRight();
             InitializeVosk();
             btnToggle.IsEnabled = false;
+
+            _authService.ToastRequested += async (msg, color, dur) =>
+            {
+                await ShowToastAsync(msg, color, dur);
+            };
+
         }
 
         protected override async void OnContentRendered(EventArgs e)
@@ -77,12 +85,11 @@ namespace SpotifyAndFeel
             var token = await _tokenService.ExchangeCodeForTokenAsync(code, redirectUri);
             Debug.WriteLine($"[MainWindow] access_token length: {token.AccessToken.Length}");
             _spotifyApi = new SpotifyApiService(token.AccessToken);
-            if (_spotifyApi == null)
+            _spotifyApi.ToastRequested += async (message, color, duration) =>
             {
-                Debug.WriteLine("AAAAAAAAAAAAAAAAAAAAAAAAAAAa");
+                await ShowToastAsync(message, color, duration);
+            };
 
-            }
-                
         }
 
         private void InitializeVosk()
@@ -265,28 +272,58 @@ namespace SpotifyAndFeel
             Close();
         }
 
-        private async Task ShowToastAsync(string message, string colorHex = "#1DB954", int durationMs = 2500)
+        public async Task ShowToastAsync(string message, string colorHex = "#1DB954", int durationMs = 2500)
         {
-            Dispatcher.Invoke(() =>
-            {
-                toastText.Text = message;
-                toastNotification.Background =
-                    (SolidColorBrush)new BrushConverter().ConvertFromString(colorHex);
-            });
+            await _toastLock.WaitAsync();
 
-            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200))
+            try
             {
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-            };
-            toastNotification.BeginAnimation(OpacityProperty, fadeIn);
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    lock (_uiLock)
+                    {
+                        toastText.Text = message;
+                        toastNotification.Background =
+                            (SolidColorBrush)new BrushConverter().ConvertFromString(colorHex);
+                    }
+                });
 
-            await Task.Delay(durationMs);
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    lock (_uiLock)
+                    {
+                        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200))
+                        {
+                            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                        };
+                        toastNotification.BeginAnimation(OpacityProperty, fadeIn);
+                    }
+                });
 
-            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300))
+                await Task.Delay(durationMs);
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    lock (_uiLock)
+                    {
+                        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300))
+                        {
+                            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
+                        };
+                        toastNotification.BeginAnimation(OpacityProperty, fadeOut);
+                    }
+                });
+
+                await Task.Delay(300);
+            }
+            catch (Exception ex)
             {
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
-            };
-            toastNotification.BeginAnimation(OpacityProperty, fadeOut);
+                Debug.WriteLine($"[Toast Error] {ex.Message}");
+            }
+            finally
+            {
+                _toastLock.Release();
+            }
         }
     }
 }
