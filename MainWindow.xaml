@@ -12,13 +12,11 @@
         Closing="Window_Closing">
 
     <Window.Resources>
-        <!-- Genel Yazı Tipi -->
         <Style TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="Foreground" Value="#EAEAEA"/>
         </Style>
 
-        <!-- Yeşil Spotify Butonu -->
         <Style x:Key="RoundedButton" TargetType="Button">
             <Setter Property="Background" Value="#1DB954"/>
             <Setter Property="Foreground" Value="White"/>
@@ -51,44 +49,46 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Dil Seçme Toggle Butonu -->
         <Style x:Key="LangToggleButton" TargetType="ToggleButton">
             <Setter Property="Background" Value="#2A2A2A"/>
             <Setter Property="Foreground" Value="#EAEAEA"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="BorderBrush" Value="#444"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
                         <Border
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="20">
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="20">
                             <ContentPresenter
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Margin="{TemplateBinding Padding}" />
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="{TemplateBinding Padding}" />
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+
             <Style.Triggers>
                 <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Background" Value="#1DB954"/>
-                    <Setter Property="Foreground" Value="White"/>
+                    <Setter Property="Background" Value="#2A2A2A"/>
+                    <Setter Property="Foreground" Value="#1DB954"/>
                     <Setter Property="BorderBrush" Value="#1DB954"/>
+                    <Setter Property="BorderThickness" Value="2"/>
                 </Trigger>
+
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#333333"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- TextBox -->
+
         <Style TargetType="TextBox">
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="14"/>
@@ -101,20 +101,15 @@
 
     </Window.Resources>
 
-    <!-- ANA GRID -->
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
-            <!-- Başlık çubuğu -->
             <RowDefinition Height="Auto"/>
-            <!-- Üst menü -->
             <RowDefinition Height="*"/>
-            <!-- Metin kutusu -->
             <RowDefinition Height="Auto"/>
-            <!-- Play butonu -->
         </Grid.RowDefinitions>
 
-        <!-- 🟩 Özel Başlık Çubuğu -->
+
         <Grid Grid.Row="0" Background="#181818" MouseDown="TitleBar_MouseDown">
             <TextBlock Text="SpotifyAndFeel"
                        VerticalAlignment="Center"
@@ -150,7 +145,6 @@
             </StackPanel>
         </Grid>
 
-        <!-- 🧭 Üst Menü -->
         <StackPanel Grid.Row="1"
                     Orientation="Horizontal"
                     HorizontalAlignment="Center"
@@ -177,7 +171,6 @@
                     Unchecked="BtnEnglish_Unchecked"/>
         </StackPanel>
 
-        <!-- 📝 Metin Kutusu -->
         <TextBox x:Name="txtResult"
                  Grid.Row="2"
                  Margin="0,0,0,10"
@@ -185,7 +178,7 @@
                  AcceptsReturn="True"
                  VerticalScrollBarVisibility="Auto"/>
 
-        <!-- ▶ Play Butonu -->
+
         <Button x:Name="btnPlay"
                 Grid.Row="3"
                 Content="Play"
@@ -197,25 +190,25 @@
                 Margin="0,5,0,0"
                 Click="BtnPlay_Click"/>
 
-        <!-- 🟢 Custom Toast Bildirimi -->
+
         <Border x:Name="toastNotification"
-Background="#1DB954"
-CornerRadius="8"
-Padding="10,6"
-HorizontalAlignment="Center"
-VerticalAlignment="Bottom"
-Margin="0,0,0,0"
-Opacity="0"
-RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <ScaleTransform ScaleX="1" ScaleY="1"/>
-            </Border.RenderTransform>
+                Background="#1DB954"
+                CornerRadius="8"
+                Padding="10,6"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,0"
+                Opacity="0"
+                RenderTransformOrigin="0.5,0.5">
+                    <Border.RenderTransform>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    </Border.RenderTransform>
             <TextBlock x:Name="toastText"
-       Foreground="White"
-       FontWeight="SemiBold"
-       Text="Success!"
-       TextAlignment="Center"
-       FontSize="13"/>
+                        Foreground="White"
+                        FontWeight="SemiBold"
+                        Text="Success!"
+                        TextAlignment="Center"
+                        FontSize="13"/>
         </Border>
 
     </Grid>
