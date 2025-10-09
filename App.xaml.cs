@@ -18,7 +18,6 @@ namespace SpotifyAndFeel
 
         public App()
         {
-
             _host = Host.CreateDefaultBuilder()
                 .ConfigureAppConfiguration(cfg =>
                     cfg.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true))
@@ -47,7 +46,7 @@ namespace SpotifyAndFeel
                 _trayIcon = (TaskbarIcon)Resources["TrayIcon"];
 
                 var window = _host.Services.GetRequiredService<MainWindow>();
-                MainWindow = window; // Bu, DI ile oluşturulan instance
+                MainWindow = window;
                 window.ShowInTaskbar = true;
                 window.Show();
                 window.Activate();
@@ -60,14 +59,11 @@ namespace SpotifyAndFeel
                 Debug.WriteLine($"Spotify initialization failed: {ex.Message}");
             }
         }
-
-
         protected override async void OnExit(ExitEventArgs e)
         {
             _trayIcon.Dispose();
             await _host.StopAsync();
             _host.Dispose();
-
             base.OnExit(e);
         }
 
@@ -80,7 +76,6 @@ namespace SpotifyAndFeel
         }
         public void OnTrayExit(object sender, RoutedEventArgs e)
         {
-
             Shutdown();
         }
     }

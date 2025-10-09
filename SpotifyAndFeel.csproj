@@ -32,7 +32,6 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<!-- Models içindeki tüm dosyaları derleme çıktısına kopyala -->
 		<Content Include="Models\**\*">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
@@ -45,12 +44,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- ASP.NET Core’un tüm Host ve Builder altyapısını getirir -->
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- Generic Host için ek konfigürasyon -->
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
 	</ItemGroup>
 

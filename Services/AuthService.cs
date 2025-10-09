@@ -27,10 +27,8 @@ namespace SpotifyAndFeel.Services
             ToastRequested?.Invoke(message, colorHex, durationMs);
         }
 
-
         public async Task<(string Code, string RedirectUri)> GetAuthorizationCodeAsync(string scope)
         {
-
             const int port = 5000;
             string baseAddress = $"{_config.RedirectUriBase}:{port}";
 
@@ -50,20 +48,16 @@ namespace SpotifyAndFeel.Services
                         {
                             endpoints.MapGet("/callback", async ctx =>
                             {
-
                                 if (ctx.Request.Query["state"] != state)
                                 {
                                     ctx.Response.StatusCode = 400;
                                     await ctx.Response.WriteAsync("Invalid state");
                                     return;
                                 }
-
                                 var code = ctx.Request.Query["code"];
                                 await ctx.Response.WriteAsync("<h1>Authorization successful ✅</h1>");
 
                                 RaiseToast("Spotify account linked successfully 🎧");
-
-
                                 tcs.TrySetResult(code);
                             });
                         });
@@ -79,8 +73,6 @@ namespace SpotifyAndFeel.Services
               $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
               $"&scope={Uri.EscapeDataString(scope)}" +
               $"&state={state}";
-
-
             try
             {
                 Process.Start(new ProcessStartInfo(authUrl) { UseShellExecute = true });
@@ -90,7 +82,6 @@ namespace SpotifyAndFeel.Services
             {
                 RaiseToast($"Failed to open browser: {ex.Message}", "#E53935");
             }
-
 
             var codeResult = await tcs.Task;
             await host.StopAsync();

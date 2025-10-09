@@ -11,7 +11,6 @@
                 <ContextMenu>
                     <MenuItem Header="Aç" Click="OnOpen"/>
                     <Separator/>
-                    <!-- Tray menüsündeki çıkış butonu artık OnTrayExit'i çağıracak -->
                     <MenuItem Header="Çıkış" Click="OnTrayExit"/>
                 </ContextMenu>
             </tb:TaskbarIcon.ContextMenu>
