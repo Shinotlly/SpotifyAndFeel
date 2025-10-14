@@ -17,25 +17,18 @@ namespace SpotifyAndFeel.Services
         public TokenService(SpotifyConfig config)
         {
             _config = config;
-
-
         }
 
         public async Task<TokenResponse> ExchangeCodeForTokenAsync(string code, string redirectUri)
         {
-
-
-
             using var client = new HttpClient();
             client.BaseAddress = new Uri("https://accounts.spotify.com/api/");
 
-            // ➊ Authorization header: Base64(clientId:clientSecret)
             var authHeader = Convert.ToBase64String(
                 Encoding.UTF8.GetBytes($"{_config.ClientId}:{_config.ClientSecret}"));
             client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Basic", authHeader);
 
-            // ➋ Form verisi
             var form = new Dictionary<string, string>
             {
                 ["grant_type"] = "authorization_code",
@@ -44,11 +37,9 @@ namespace SpotifyAndFeel.Services
             };
             using var content = new FormUrlEncodedContent(form);
 
-            // ➌ İsteği yap
             var res = await client.PostAsync("token", content);
             var body = await res.Content.ReadAsStringAsync();
 
-            // ➍ HTTP durum kodunu ve gövdeyi konsola yaz
             Debug.WriteLine($"[TokenService] POST /token");
             Debug.WriteLine($"[TokenService] Authorization: Basic {authHeader}");
             Debug.WriteLine($"[TokenService] Form: code={code}, redirect_uri={redirectUri}");
@@ -59,18 +50,14 @@ namespace SpotifyAndFeel.Services
                 throw new InvalidOperationException(
                     $"Token API hata {(int)res.StatusCode}: {body}");
 
-            // ➎ JSON’dan objeyi çıkar
             var token = JsonSerializer.Deserialize<TokenResponse>(body,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            // ➏ Erişimi kontrol et
             if (string.IsNullOrWhiteSpace(token?.AccessToken))
                 throw new InvalidOperationException(
                     "TokenResponse içinde access_token bulunamadı");
 
             return token;
-
-
         }
     }
 }

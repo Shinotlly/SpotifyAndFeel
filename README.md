@@ -17,3 +17,16 @@ This project uses open-source Vosk speech recognition models for English and Tur
 
 https://alphacephei.com/vosk/models go to this link and download English (vosk-model-small-en-us-0.15) and Turkish (vosk-model-small-tr-0.3) models (necessary, if you dont want to use one of this models you can change them but try not to break the code)
 And unzip this models, add to Models (on solution explorer). 
+
+
+IMPORTANT!!!!!!!!
+
+In your project folder, create a new file named appsettings.json with the following content:
+{
+  "Spotify": {
+    "ClientId": "your-client-id-here",
+    "ClientSecret": "your-client-secret-here",
+    "RedirectUriBase": "http://127.0.0.1"
+  }
+}
+
