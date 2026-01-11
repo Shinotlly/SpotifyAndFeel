@@ -30,3 +30,5 @@ In your project folder, create a new file named appsettings.json with the follow
   }
 }
 
+Important 2: When using a hotkey combination, please release the modifier key (e.g., Ctrl) before releasing the main key to ensure correct behavior. 
+
