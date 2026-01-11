@@ -99,6 +99,50 @@
             <Setter Property="Padding" Value="6"/>
         </Style>
 
+        <Style x:Key="HeaderButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Foreground" Value="#EAEAEA"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+
+            <!-- Default template override -->
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <!-- Hover -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#3CE67E"/>
+                            </Trigger>
+
+                            <!-- Click pressed -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#3CE67E"/>
+                            </Trigger>
+
+                            <!-- Disabled -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </Window.Resources>
 
     <Grid Margin="15">
@@ -120,29 +164,120 @@
                        FontWeight="SemiBold"/>
 
             <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Margin="0,0,10,0">
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Margin="0,0,10,0">
+
+
+                <Button x:Name="btnSettings"
+            Content="⚙"
+            Style="{StaticResource HeaderButtonStyle}"
+            FontSize="16"
+            Click="Settings_Click"/>
+
+                <Popup x:Name="popupSettings"
+       PlacementTarget="{Binding ElementName=btnSettings}"
+       StaysOpen="False"
+       AllowsTransparency="True"
+       PopupAnimation="Slide">
+
+                    <Border Background="#222"
+            CornerRadius="5"
+            Padding="10"
+            Width="350">
+                        <StackPanel>
+
+                            <TextBlock Text="Controls"
+                       FontSize="16"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center"
+                       Foreground="White"
+                       Background="Transparent"
+                       Margin="0,0,0,10"/>
+
+                            <!-- Turkish Hotkey -->
+                            <Grid Margin="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="First Language"
+                           VerticalAlignment="Center"
+                           Foreground="White"
+                           Margin="0,0,10,0"/>
+
+                                <TextBox x:Name="txtTurkishHotkey"
+                         Grid.Column="1"
+                         Width="150"
+                         IsReadOnly="True"
+                         PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                         HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <!-- English Hotkey -->
+                            <Grid Margin="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="Second Language"
+                           VerticalAlignment="Center"
+                           Foreground="White"
+                           Margin="0,0,10,0"/>
+
+                                <TextBox x:Name="txtEnglishHotkey"
+                         Grid.Column="1"
+                         Width="150"
+                         IsReadOnly="True"
+                         PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                         HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <!-- Record Hotkey -->
+                            <Grid Margin="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="Record"
+                           VerticalAlignment="Center"
+                           Foreground="White"
+                           Margin="0,0,10,0"/>
+
+                                <TextBox x:Name="txtStartHotkey"
+                         Grid.Column="1"
+                         Width="150"
+                         IsReadOnly="True"
+                         PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                         HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <Button Content="Apply"
+                    Margin="0,10,0,0"
+                    Click="BtnApplyHotkeys_Click"
+                    HorizontalAlignment="Center"
+                    Width="100"/>
+                        </StackPanel>
+                    </Border>
+                </Popup>
+
+
+
                 <Button Content="—"
-                        Width="30" Height="30"
-                        Background="Transparent"
-                        Foreground="#EAEAEA"
-                        BorderBrush="Transparent"
-                        FontSize="16"
-                        FontWeight="Bold"
-                        Cursor="Hand"
-                        Click="Minimize_Click"
-                        Margin="0,0,5,0"/>
+            Style="{StaticResource HeaderButtonStyle}"
+            FontSize="16"
+            Click="Minimize_Click"/>
+
                 <Button Content="✕"
-                        Width="30" Height="30"
-                        Background="Transparent"
-                        Foreground="#EAEAEA"
-                        BorderBrush="Transparent"
-                        FontSize="14"
-                        FontWeight="Bold"
-                        Cursor="Hand"
-                        Click="Close_Click"/>
+            Style="{StaticResource HeaderButtonStyle}"
+            FontSize="14"
+            Margin="0"
+            Click="Close_Click"/>
             </StackPanel>
+
         </Grid>
 
         <StackPanel Grid.Row="1"

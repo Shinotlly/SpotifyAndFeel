@@ -1,0 +1,19 @@
+﻿<UserControl x:Class="SpotifyAndFeel.KeyCaptureControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border x:Name="border"
+            BorderBrush="#777"
+            BorderThickness="1"
+            Padding="6"
+            CornerRadius="4"
+            Background="#222"
+            MouseLeftButtonDown="Border_MouseLeftButtonDown">
+
+        <TextBlock x:Name="txtDisplay"
+                   Text="Press a key..."
+                   Foreground="White"
+                   VerticalAlignment="Center"
+                   FontSize="14"/>
+    </Border>
+</UserControl>
+
