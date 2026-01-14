@@ -30,3 +30,7 @@ In your project folder, create a new file named appsettings.json with the follow
   }
 }
 
+Important 2: When using a hotkey combination, please release the modifier key (e.g., Ctrl) before releasing the main key to ensure correct behavior. 
+
+Disclaimer: This project is not affiliated with, endorsed, or sponsored by Spotify. It uses the Spotify Web API for educational and non-commercial purposes only.
+
