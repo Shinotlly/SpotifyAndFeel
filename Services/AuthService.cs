@@ -55,7 +55,7 @@ namespace SpotifyAndFeel.Services
                                     return;
                                 }
                                 var code = ctx.Request.Query["code"];
-                                await ctx.Response.WriteAsync("<h1>Authorization successful ✅</h1>");
+                                await ctx.Response.WriteAsync("<h1>Authorization successful");
 
                                 RaiseToast("Spotify account linked successfully 🎧");
                                 tcs.TrySetResult(code);
