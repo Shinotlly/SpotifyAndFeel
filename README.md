@@ -1,27 +1,58 @@
-﻿# SpotifyAndFeel
+🎵 SpotifyAndFeel
 
-(You need Spotify Premium for this app)
+!!!⚠️ You need Spotify Premium to use this application.!!!
 
 SpotifyAndFeel is a smart desktop application that combines Spotify control with speech recognition.
-It allows you to speak or type a song name or just random words (for example: I feel soo tired today) and instantly play it on your Spotify account.
-And if voice rec didnt work well, you can change the text by manuel.
-And also if you want to search with any language, you can just type your words and press Play button.
 
-First you have to sign in to Spotify Api service (You need Spotfiy Premium). Go to your dashboard and create an app. ---> (https://developer.spotify.com/)
-Then you will see your Client ID and Client secret. And also you need a Redirect URI. Copy and paste this http for that ---> (http://127.0.0.1:5000/callback)
-On appsettings.json (on solution explorer), you have to type your client id and client secret that you saw on your dashboard.
+You can:
 
-Use the .NET CLI to restore all NuGet packages: dotnet restore
+🎤 Speak in your selected language and let the app convert your voice to text
 
-This project uses open-source Vosk speech recognition models for English and Turkish.
+🔍 Automatically search and play matching songs on your Spotify account
 
-https://alphacephei.com/vosk/models go to this link and download English (vosk-model-small-en-us-0.15) and Turkish (vosk-model-small-tr-0.3) models (necessary, if you dont want to use one of this models you can change them but try not to break the code)
-And unzip this models, add to Models (on solution explorer). 
+⌨️ Or simply type text to search and play music
 
+📝 If speech recognition doesn’t work well, you can manually edit the recognized text
 
-IMPORTANT!!!!!!!!
+Example usage:
 
-In your project folder, create a new file named appsettings.json with the following content:
+“I feel so tired today” → The app searches and plays a matching song automatically 🎶
+
+-----✨ Features-----
+
+🎧 Spotify playback control via Spotify Web API
+
+🎤 Speech-to-text support (English & Turkish)
+
+⌨️ Text-based search support
+
+-----🔑 Spotify API Setup-----
+
+Go to:
+👉 https://developer.spotify.com/
+
+Open your Dashboard and create a new app.
+
+You will get:
+
+Client ID
+
+Client Secret
+
+Add this Redirect URI in your Spotify app settings:
+
+http://127.0.0.1:5000/callback
+
+-----⚙️ Configuration-----
+
+1️⃣ Create appsettings.json
+
+In the project root folder, create a file named:
+
+appsettings.json
+
+And put this inside:
+
 {
   "Spotify": {
     "ClientId": "your-client-id-here",
@@ -30,7 +61,47 @@ In your project folder, create a new file named appsettings.json with the follow
   }
 }
 
-Important 2: When using a hotkey combination, please release the modifier key (e.g., Ctrl) before releasing the main key to ensure correct behavior. 
+2️⃣ Restore NuGet Packages
 
-Disclaimer: This project is not affiliated with, endorsed, or sponsored by Spotify. It uses the Spotify Web API for educational and non-commercial purposes only.
+Run:
 
+dotnet restore
+
+-----🗣️ Speech Recognition Models (Vosk)-----
+
+This project uses Vosk speech recognition models for:
+
+🇺🇸 English
+
+🇹🇷 Turkish
+
+Download models from:
+
+👉 https://alphacephei.com/vosk/models
+
+Download:
+
+vosk-model-small-en-us-0.15
+
+vosk-model-small-tr-0.3
+
+Then:
+
+Extract them
+
+Copy them into the Models folder in the project
+
+⚠️ You can change models, but be careful not to break the code.
+
+-----⌨️ Hotkey Notice-----
+
+⚠️ When using a hotkey combination, release the modifier key (e.g., Ctrl) before releasing the main key to ensure correct behavior.
+
+-----⚠️ Disclaimer-----
+
+This project is not affiliated with, endorsed, or sponsored by Spotify.
+It uses the Spotify Web API for educational and non-commercial purposes only.
+
+-----📜 License-----
+
+This project is open-source and provided under the MIT License.
